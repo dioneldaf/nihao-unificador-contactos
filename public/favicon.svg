@@ -1,0 +1,19 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Rounded tile background (brand red) -->
+  <rect width="512" height="512" rx="112" fill="#D72028"/>
+
+  <!-- Two overlapping contacts merging into one -->
+  <!-- Back figure (yellow) - slightly smaller, set back/left -->
+  <g>
+    <circle cx="192" cy="200" r="50" fill="#FCDB03"/>
+    <path d="M120 360 a72 72 0 0 1 144 0 z" fill="#FCDB03"/>
+  </g>
+
+  <!-- Red gap ring around front figure to create clean overlap separation -->
+  <circle cx="320" cy="196" r="68" fill="#D72028"/>
+  <path d="M232 372 a88 88 0 0 1 176 0 z" fill="#D72028"/>
+
+  <!-- Front figure (white) - prominent, the "unified" result -->
+  <circle cx="320" cy="196" r="56" fill="#FFFFFF"/>
+  <path d="M244 372 a76 76 0 0 1 152 0 z" fill="#FFFFFF"/>
+</svg>
