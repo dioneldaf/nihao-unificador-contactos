@@ -31,7 +31,7 @@ function MergedField({ field, value, onChange }) {
 }
 
 // Tarjeta destino: el contacto unificado que el empleado va construyendo.
-export default function MergedContactCard({ merged, onChange, onFillFromPrimary, canFill, primaryRank, userAccountWarning }) {
+export default function MergedContactCard({ merged, onChange, onFillFromPrimary, canFill, primaryRank, userAccountWarning, onReset }) {
   return (
     <div className="merged-card">
       <div className="merged-card__head">
@@ -43,19 +43,29 @@ export default function MergedContactCard({ merged, onChange, onFillFromPrimary,
             </span>
           )}
         </span>
-        <button
-          type="button"
-          className="btn btn--ghost btn--sm"
-          onClick={onFillFromPrimary}
-          disabled={!canFill}
-          title={
-            canFill
-              ? 'Copia todos los valores del contacto principal'
-              : 'Marca primero un contacto como principal'
-          }
-        >
-          Rellenar con el principal
-        </button>
+        <div className="merged-card__tools">
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            onClick={onFillFromPrimary}
+            disabled={!canFill}
+            title={
+              canFill
+                ? 'Copia todos los valores del contacto principal'
+                : 'Marca primero un contacto como principal'
+            }
+          >
+            Rellenar con el principal
+          </button>
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            onClick={onReset}
+            title="Vacía los campos y la selección de este bloque"
+          >
+            Reestablecer
+          </button>
+        </div>
       </div>
       {userAccountWarning && (
         <p className="merged-warning" role="status">

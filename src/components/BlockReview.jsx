@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { FIELD_KEYS } from '../config/fields.js'
 import { emptyMerged, mergedFromContact, computeRank, normalizeMergedFields } from '../lib/merge.js'
+import { draftKey, loadJSON, saveJSON, removeKey } from '../lib/storage.js'
 import AiContextPanel from './AiContextPanel.jsx'
 import ContactCard from './ContactCard.jsx'
 import MergedContactCard from './MergedContactCard.jsx'
@@ -19,11 +20,27 @@ export default function BlockReview({ entry, onMerge, onDiscard, onBack, onPrev,
   const block = entry.block
   const contacts = block.contacts || []
 
-  const [merged, setMerged] = useState(emptyMerged)
-  const [primaryId, setPrimaryId] = useState(null)
-  const [excludedIds, setExcludedIds] = useState(() => new Set())
+  // Borrador persistente por bloque: se conserva al salir de la vista o recargar la web.
+  const dkey = draftKey(entry.row_number)
+  const [merged, setMerged] = useState(() => loadJSON(dkey, null)?.merged ?? emptyMerged())
+  const [primaryId, setPrimaryId] = useState(() => loadJSON(dkey, null)?.primaryId ?? null)
+  const [excludedIds, setExcludedIds] = useState(
+    () => new Set(loadJSON(dkey, null)?.excludedIds ?? []),
+  )
   // valor que se está arrastrando, para pintarlo siguiendo al ratón (DragOverlay)
   const [activeValue, setActiveValue] = useState(null)
+
+  // Guarda el borrador cada vez que cambian los campos / principal / excluidos.
+  useEffect(() => {
+    saveJSON(dkey, { merged, primaryId, excludedIds: Array.from(excludedIds) })
+  }, [dkey, merged, primaryId, excludedIds])
+
+  function handleReset() {
+    setMerged(emptyMerged())
+    setPrimaryId(null)
+    setExcludedIds(new Set())
+    removeKey(dkey)
+  }
 
   // Pequeña distancia de activación para no disparar drag con un simple clic.
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
@@ -152,7 +169,7 @@ export default function BlockReview({ entry, onMerge, onDiscard, onBack, onPrev,
           <button type="button" className="btn btn--ghost" onClick={onBack}>
             ← Volver a la lista
           </button>
-          <span className="review__blockkey">Bloque: {block.block}</span>
+          <span className="review__blockkey">{block.block}</span>
           <div className="review__nav">
             <button
               type="button"
@@ -200,6 +217,7 @@ export default function BlockReview({ entry, onMerge, onDiscard, onBack, onPrev,
               canFill={!!primaryContact}
               primaryRank={primaryContact ? computeRank(primaryContact) : null}
               userAccountWarning={userAccountWarning}
+              onReset={handleReset}
             />
             <div className="merged-actions">
               <button
