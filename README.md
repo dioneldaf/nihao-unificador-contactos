@@ -116,3 +116,8 @@ El proyecto está pensado para uso interno. Para producción:
    (proxy inverso en el servidor) **o** habilitar CORS en el webhook de n8n.
 
 No requiere autenticación ni variables de entorno.
+
+## Licencia
+
+Software propietario. Copyright © 2026 **Nihao53**. Todos los derechos reservados.
+Uso interno; consulta el archivo [LICENSE](LICENSE).

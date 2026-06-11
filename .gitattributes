@@ -1,0 +1,7 @@
+# Normaliza los saltos de línea: en el repositorio siempre LF.
+* text=auto eol=lf
+
+# Binarios: nunca se tocan.
+*.png binary
+*.ico binary
+*.svg text eol=lf
