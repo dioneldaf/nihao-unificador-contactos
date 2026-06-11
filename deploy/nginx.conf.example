@@ -1,22 +1,39 @@
-# Ejemplo de configuración Nginx para servir el build (dist/) y reemplazar el
-# proxy de desarrollo de Vite por un reverse proxy real.
+# Configuración Nginx para nu.nihao53.com (HTTPS) — Unificador de contactos.
 #
-# El front llama a rutas relativas /api/*; aquí las reenviamos al webhook de n8n.
-# Sin este bloque, /api/* cae en el fallback de la SPA y devuelve index.html
-# (por eso "el webhook responde el propio index" en producción).
+# Sirve el build (contenido de `npm run build` copiado en /var/www/nu) y reemplaza
+# el proxy de desarrollo de Vite por un reverse proxy real: /api/* -> webhook de n8n.
+# Sin el bloque `location /api/`, las llamadas caen en el fallback de la SPA y
+# devuelven index.html (por eso "el webhook respondía el propio index").
 #
-# Ajusta server_name y root a tu entorno. Para HTTPS añade los bloques ssl_*.
+# Despliegue:
+#   npm run build
+#   sudo rm -rf /var/www/nu/* && sudo cp -r dist/* /var/www/nu/
+#   sudo nginx -t && sudo systemctl reload nginx
 
+# --- HTTP -> HTTPS ---
 server {
     listen 80;
-    server_name tu-dominio.com;
+    listen [::]:80;
+    server_name nu.nihao53.com;
+    return 301 https://$host$request_uri;
+}
 
-    # Carpeta donde subes el resultado de `npm run build`
-    root /var/www/unificador/dist;
+# --- HTTPS ---
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name nu.nihao53.com;
+
+    root /var/www/nu;
     index index.html;
 
+    # Certificados (ajusta las rutas si no usas Let's Encrypt/certbot)
+    ssl_certificate     /etc/letsencrypt/live/nu.nihao53.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/nu.nihao53.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
     # --- Proxy: /api/* -> https://automatizaciones.nihao53.com/webhook/* ---
-    # La barra final en proxy_pass hace que /api/get-blocks-human se reescriba a
+    # La barra final en proxy_pass reescribe /api/get-blocks-human a
     # /webhook/get-blocks-human (equivale al rewrite del proxy de Vite).
     location /api/ {
         proxy_pass https://automatizaciones.nihao53.com/webhook/;
@@ -31,6 +48,13 @@ server {
 
         # El webhook puede tardar; margen razonable.
         proxy_read_timeout 60s;
+    }
+
+    # --- Assets con hash de Vite: caché larga e inmutable ---
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        try_files $uri =404;
     }
 
     # --- SPA: cualquier otra ruta sirve index.html ---

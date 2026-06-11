@@ -109,22 +109,26 @@ vite.config.js          # proxy /api → /webhook (CORS en dev)
 
 ## Despliegue
 
-El proyecto está pensado para uso interno. Para producción:
+El proyecto es de uso interno y está desplegado en **`nu.nihao53.com`** (Nginx + HTTPS,
+root `/var/www/nu`).
 
-1. `npm run build` y servir `dist/`.
-2. **Importante:** el proxy de [`vite.config.js`](vite.config.js) **solo funciona en
-   desarrollo** (`npm run dev`). En producción hay que replicarlo con un reverse proxy
-   en el servidor: `/api/*` debe reenviarse a
-   `https://automatizaciones.nihao53.com/webhook/*`.
+**Importante:** el proxy de [`vite.config.js`](vite.config.js) **solo funciona en
+desarrollo** (`npm run dev`). En producción se replica con un reverse proxy en Nginx:
+`/api/*` se reenvía a `https://automatizaciones.nihao53.com/webhook/*`. Sin él, las
+llamadas a `/api/*` caen en el _fallback_ de la SPA y **devuelven `index.html`** en lugar
+del JSON del webhook.
 
-   Si no, las llamadas a `/api/*` caen en el _fallback_ de la SPA y **devuelven
-   `index.html`** en lugar del JSON del webhook.
+Desplegar:
 
-   Configuraciones de ejemplo listas para copiar:
-   - Nginx: [`deploy/nginx.conf.example`](deploy/nginx.conf.example)
-   - Apache: [`deploy/apache.htaccess.example`](deploy/apache.htaccess.example)
+```bash
+npm run build
+sudo rm -rf /var/www/nu/* && sudo cp -r dist/* /var/www/nu/
+sudo nginx -t && sudo systemctl reload nginx
+```
 
-   Alternativa: llamar al webhook con URL absoluta y habilitar CORS en n8n.
+Configuraciones listas para copiar:
+- Nginx (nu.nihao53.com, HTTPS): [`deploy/nginx.conf.example`](deploy/nginx.conf.example)
+- Apache (alternativa): [`deploy/apache.htaccess.example`](deploy/apache.htaccess.example)
 
 No requiere autenticación ni variables de entorno.
 
