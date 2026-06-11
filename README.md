@@ -111,9 +111,20 @@ vite.config.js          # proxy /api → /webhook (CORS en dev)
 
 El proyecto está pensado para uso interno. Para producción:
 
-1. `npm run build` y servir `dist/` (cualquier hosting estático o Nginx).
-2. Hacer que `/api/*` llegue a `https://automatizaciones.nihao53.com/webhook/*`
-   (proxy inverso en el servidor) **o** habilitar CORS en el webhook de n8n.
+1. `npm run build` y servir `dist/`.
+2. **Importante:** el proxy de [`vite.config.js`](vite.config.js) **solo funciona en
+   desarrollo** (`npm run dev`). En producción hay que replicarlo con un reverse proxy
+   en el servidor: `/api/*` debe reenviarse a
+   `https://automatizaciones.nihao53.com/webhook/*`.
+
+   Si no, las llamadas a `/api/*` caen en el _fallback_ de la SPA y **devuelven
+   `index.html`** en lugar del JSON del webhook.
+
+   Configuraciones de ejemplo listas para copiar:
+   - Nginx: [`deploy/nginx.conf.example`](deploy/nginx.conf.example)
+   - Apache: [`deploy/apache.htaccess.example`](deploy/apache.htaccess.example)
+
+   Alternativa: llamar al webhook con URL absoluta y habilitar CORS en n8n.
 
 No requiere autenticación ni variables de entorno.
 

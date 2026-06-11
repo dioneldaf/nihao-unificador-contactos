@@ -1,0 +1,41 @@
+# Ejemplo de configuración Nginx para servir el build (dist/) y reemplazar el
+# proxy de desarrollo de Vite por un reverse proxy real.
+#
+# El front llama a rutas relativas /api/*; aquí las reenviamos al webhook de n8n.
+# Sin este bloque, /api/* cae en el fallback de la SPA y devuelve index.html
+# (por eso "el webhook responde el propio index" en producción).
+#
+# Ajusta server_name y root a tu entorno. Para HTTPS añade los bloques ssl_*.
+
+server {
+    listen 80;
+    server_name tu-dominio.com;
+
+    # Carpeta donde subes el resultado de `npm run build`
+    root /var/www/unificador/dist;
+    index index.html;
+
+    # --- Proxy: /api/* -> https://automatizaciones.nihao53.com/webhook/* ---
+    # La barra final en proxy_pass hace que /api/get-blocks-human se reescriba a
+    # /webhook/get-blocks-human (equivale al rewrite del proxy de Vite).
+    location /api/ {
+        proxy_pass https://automatizaciones.nihao53.com/webhook/;
+        proxy_http_version 1.1;
+
+        # SNI + Host correctos hacia el upstream (necesario al ir por Cloudflare).
+        proxy_ssl_server_name on;
+        proxy_set_header Host automatizaciones.nihao53.com;
+
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # El webhook puede tardar; margen razonable.
+        proxy_read_timeout 60s;
+    }
+
+    # --- SPA: cualquier otra ruta sirve index.html ---
+    # (no afecta a /api/ porque ese prefijo es más específico y tiene prioridad)
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

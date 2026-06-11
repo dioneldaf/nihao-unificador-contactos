@@ -1,0 +1,19 @@
+# Ejemplo para Apache (colócalo como .htaccess en la raíz del build, o en el vhost).
+#
+# Requiere los módulos: mod_proxy, mod_proxy_http, mod_ssl, mod_rewrite.
+# Reemplaza el proxy de desarrollo de Vite: reenvía /api/* al webhook de n8n y
+# sirve index.html para el resto de rutas (SPA). Sin esto, /api/* devuelve el
+# propio index.html en producción.
+
+# --- Proxy: /api/* -> https://automatizaciones.nihao53.com/webhook/* ---
+SSLProxyEngine On
+ProxyPreserveHost Off
+ProxyPass        /api/  https://automatizaciones.nihao53.com/webhook/
+ProxyPassReverse /api/  https://automatizaciones.nihao53.com/webhook/
+
+# --- SPA fallback: todo lo que no sea /api/ ni un archivo real -> index.html ---
+RewriteEngine On
+RewriteCond %{REQUEST_URI} !^/api/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.html [L]
