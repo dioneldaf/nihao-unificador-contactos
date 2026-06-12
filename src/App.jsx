@@ -3,6 +3,7 @@ import { fetchBlocks, submitResolution } from './api/blocks.js'
 import BlockList from './components/BlockList.jsx'
 import BlockReview from './components/BlockReview.jsx'
 import ListControls, { DEFAULT_PREFS } from './components/ListControls.jsx'
+import Pagination from './components/Pagination.jsx'
 import ProgressBar from './components/ProgressBar.jsx'
 import { LIST_PREFS_KEY, draftKey, loadJSON, saveJSON, removeKey } from './lib/storage.js'
 
@@ -28,6 +29,11 @@ export default function App() {
   }))
   useEffect(() => {
     saveJSON(LIST_PREFS_KEY, listPrefs)
+  }, [listPrefs])
+  // página actual de la lista (se reinicia al cambiar orden/filtros/tamaño de página)
+  const [page, setPage] = useState(1)
+  useEffect(() => {
+    setPage(1)
   }, [listPrefs])
 
   useEffect(() => {
@@ -100,6 +106,12 @@ export default function App() {
   )
 
   const openEntry = blocks.find((b) => b.row_number === openRow) || null
+
+  // Paginación de la lista (sobre la lista ya filtrada/ordenada).
+  const pageSize = listPrefs.pageSize || DEFAULT_PREFS.pageSize
+  const totalPages = Math.max(1, Math.ceil(orderedBlocks.length / pageSize))
+  const safePage = Math.min(page, totalPages)
+  const pageBlocks = orderedBlocks.slice((safePage - 1) * pageSize, safePage * pageSize)
 
   // Busca el row_number del siguiente/anterior bloque pendiente (no hecho) respecto a
   // `fromRow`, siguiendo el orden mostrado en la lista. dir = +1 / -1.
@@ -188,7 +200,10 @@ export default function App() {
             {orderedBlocks.length === 0 ? (
               <p className="state">Ningún bloque coincide con los filtros.</p>
             ) : (
-              <BlockList entries={orderedBlocks} statusOf={displayStatusOf} onOpen={setOpenRow} />
+              <>
+                <BlockList entries={pageBlocks} statusOf={displayStatusOf} onOpen={setOpenRow} />
+                <Pagination page={safePage} totalPages={totalPages} onChange={setPage} />
+              </>
             )}
           </>
         )}
